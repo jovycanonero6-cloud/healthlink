@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="theme-color" content="#0A7B6E">
+  <title>HealthLink · SDG3 Appointment Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #EFF3F8;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .app-container {
+      max-width: 400px;
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 44px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      height: 720px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .app-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 18px;
+      scroll-behavior: smooth;
+    }
+
+    .app-main::-webkit-scrollbar {
+      width: 4px;
+    }
+    .app-main::-webkit-scrollbar-track {
+      background: #E9ECF2;
+    }
+    .app-main::-webkit-scrollbar-thumb {
+      background: #BEC5D1;
+      border-radius: 10px;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .logout-btn {
+      background: #f0f2f5;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #e74c3c;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .logout-btn:active { transform: scale(0.96); background: #e0e2e5; }
+
+    .sdg-splash {
+      background: linear-gradient(145deg, #0d5c4f, #0A3D35);
+      color: white;
+      text-align: center;
+      padding: 40px 24px;
+      border-radius: 32px;
+      margin: 20px 0;
+    }
+    .sdg-logo { font-size: 5rem; margin-bottom: 12px; }
+    .sdg-title { font-size: 1.6rem; font-weight: 800; margin: 12px 0; }
+    .sdg-number { background: rgba(255,255,255,0.2); display: inline-block; padding: 5px 16px; border-radius: 40px; font-size: 0.8rem; margin-bottom: 16px; }
+    .sdg-description { font-size: 0.9rem; line-height: 1.5; opacity: 0.9; }
+
+    .auth-card {
+      background: white;
+      border-radius: 32px;
+      padding: 28px 22px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-top: 16px;
+    }
+    .auth-title { font-size: 1.8rem; font-weight: 700; color: #1A2C3E; margin-bottom: 8px; }
+    .auth-sub { color: #6C7A91; font-size: 0.85rem; margin-bottom: 24px; }
+    .input-group { margin-bottom: 18px; }
+    .input-group label { font-size: 0.75rem; font-weight: 600; color: #2C3E50; display: block; margin-bottom: 6px; }
+    .input-group input { width: 100%; padding: 14px 16px; border-radius: 60px; border: 1.5px solid #E2E8F0; font-size: 0.95rem; outline: none; transition: 0.2s; }
+    .input-group input:focus { border-color: #0A7B6E; box-shadow: 0 0 0 3px rgba(10,123,110,0.1); }
+    .btn { background: #0A7B6E; color: white; border: none; padding: 14px 20px; border-radius: 40px; font-weight: 600; font-size: 16px; width: 100%; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .btn:active { transform: scale(0.97); background: #086256; }
+    .btn-outline { background: transparent; border: 1.5px solid #0A7B6E; color: #0A7B6E; }
+    .auth-switch { text-align: center; margin-top: 20px; font-size: 0.85rem; color: #6C7A91; }
+    .auth-switch span { color: #0A7B6E; font-weight: 600; cursor: pointer; }
+    .avatar-preview { font-size: 3rem; text-align: center; margin-bottom: 8px; }
+
+    .welcome-header { margin-bottom: 24px; }
+    .greeting { font-size: 28px; font-weight: 700; color: #1A2C3E; }
+    .greeting-name { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #0A7B6E, #1E9C7A); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .subhead { font-size: 14px; color: #6C7A91; margin-top: 4px; }
+    .card { background: white; border-radius: 24px; padding: 18px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); border: 1px solid #EDF2F7; }
+    .appointment-card { background: linear-gradient(135deg, #EFF9F5 0%, #E6F3ED 100%); border-left: 5px solid #1E9C7A; margin-bottom: 12px; }
+    .section-title { font-size: 18px; font-weight: 600; color: #1F2A44; margin: 16px 0 12px 0; }
+    .doctor-name { font-weight: 800; font-size: 18px; color: #1A2C3E; }
+    .specialty { color: #6C7A91; font-size: 13px; margin: 4px 0; }
+    .badge { background: #E9F0F9; padding: 5px 12px; border-radius: 30px; font-size: 12px; font-weight: 500; display: inline-block; }
+    .doctor-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #EDF2F7; cursor: pointer; }
+    .doctor-row:last-child { border-bottom: none; }
+    .doctor-info { flex: 1; }
+    .date-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }
+    .date-chip { background: #F1F5F9; text-align: center; padding: 10px 0; border-radius: 40px; font-weight: 500; font-size: 13px; cursor: pointer; }
+    .date-chip.selected { background: #0A7B6E; color: white; }
+    .time-slot { display: inline-block; background: #F1F5F9; padding: 10px 20px; border-radius: 40px; margin: 6px 8px 6px 0; font-weight: 500; cursor: pointer; }
+    .time-slot.selected { background: #1E9C7A; color: white; }
+    .bottom-nav { background: white; border-top: 1px solid #EDF2F7; display: flex; justify-content: space-around; padding: 10px 12px 18px; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: #8E9AAB; font-weight: 500; cursor: pointer; }
+    .nav-item.active { color: #0A7B6E; }
+    .nav-icon { font-size: 22px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin: 12px 0; }
+    .cal-date { padding: 6px 0; border-radius: 30px; font-size: 13px; }
+    .cal-date.has-appointment { background: #1E9C7A; color: white; font-weight: bold; }
+    .reminder-item { background: #F8FAFE; border-radius: 20px; padding: 14px; margin-top: 10px; border-left: 4px solid #1E9C7A; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .cancel-appt-btn, .cancel-single { background: #ffe4db; border: none; padding: 5px 12px; border-radius: 30px; color: #e74c3c; font-size: 12px; cursor: pointer; font-weight: 600; }
+    .back-link { color: #0A7B6E; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-block; }
+    .admin-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #EDF2F7; }
+    .admin-user-item { background: #F8FAFE; border-radius: 16px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .delete-user-btn { background: #ffe4db; border: none; padding: 6px 12px; border-radius: 20px; color: #e74c3c; cursor: pointer; font-size: 12px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .toggle-switch { width: 48px; height: 24px; background: #ccc; border-radius: 60px; display: inline-block; position: relative; cursor: pointer; transition: 0.2s; }
+    .toggle-switch.active { background: #0A7B6E; }
+    .toggle-switch::after { content: ''; width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.2s; }
+    .toggle-switch.active::after { left: 25px; }
+    select, input[type="file"] { background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 60px; padding: 8px 16px; font-size: 14px; width: 100%; margin-top: 8px; }
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal-card {
+      background: white;
+      max-width: 280px;
+      width: 80%;
+      border-radius: 32px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2);
+    }
+    .modal-card p { margin: 16px 0; color: #2C3E50; }
+    .modal-btn { background: #0A7B6E; color: white; border: none; padding: 10px 20px; border-radius: 40px; font-weight: 600; cursor: pointer; }
+    .info-text { font-size: 14px; line-height: 1.5; color: #4A5568; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="app-main" id="appMain">
+    <!-- SDG Splash -->
+    <div id="sdgScreen" class="screen active">
+      <div class="sdg-splash">
+        <div class="sdg-logo">🌍❤️🌿</div>
+        <div class="sdg-number">SDG 3</div>
+        <div class="sdg-title">Good Health & Well-being</div>
+        <div class="sdg-description">Ensuring healthy lives for all. HealthLink: multiple appointments, smart reminders, personalized care.</div>
+      </div>
+      <button class="btn" id="continueToAuthBtn" style="margin-top: 20px;">Get Started →</button>
+    </div>
+
+    <!-- Sign Up -->
+    <div id="signupScreen" class="screen">
+      <div class="auth-card"><div class="avatar-preview">🌱</div><div class="auth-title">Create Account</div><div class="auth-sub">Join HealthLink</div>
+        <div class="input-group"><label>Username</label><input type="text" id="signupUsername" placeholder="sarah_johnson" value="sarah_johnson"></div>
+        <div class="input-group"><label>Full Name</label><input type="text" id="signupName" placeholder="Sarah Johnson" value="Sarah Johnson"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="signupPassword" placeholder="Create password" value="demo123"></div>
+        <div class="input-group"><label>Confirm Password</label><input type="password" id="signupConfirmPassword" placeholder="Confirm" value="demo123"></div>
+        <button class="btn" id="doSignupBtn">Sign Up →</button>
+        <div class="auth-switch">Already have an account? <span id="switchToLoginFromSignup">Login</span></div>
+      </div>
+    </div>
+
+    <!-- Login -->
+    <div id="loginScreen" class="screen">
+      <div class="auth-card"><div class="avatar-preview">👩‍⚕️</div><div class="auth-title">Welcome Back</div><div class="auth-sub">Sign in to access your health portal</div>
+        <div class="input-group"><label>Username</label><input type="text" id="loginUsername" value="sarah_johnson"></div>
+        <div class="input-group"><label>Password</label><input type="password" id="loginPassword" value="demo123"></div>
+        <button class="btn" id="doLoginBtn">Login →</button>
+        <div class="auth-switch">Don't have an account? <span id="switchToSignupFromLogin">Sign Up</span></div>
+      </div>
+    </div>
+
+    <!-- User Home -->
+    <div id="homeScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="logoutBtn">Log out</button></div>
+      <div class="welcome-header"><div class="greeting">Hello,</div><div class="greeting-name" id="userNameDisplay">Sarah! 👋</div><div class="subhead">Multiple appointments, one hub</div></div>
+      <div class="section-title">Quick Actions</div>
+      <div style="display: flex; gap: 12px; margin-bottom: 16px;"><div class="badge" id="quickBookBtn" style="background:#0A7B6E15; cursor:pointer;">📅 Book New</div><div class="badge" id="quickReminderBtn" style="background:#0A7B6E15; cursor:pointer;">⏰ Reminders</div></div>
+      <div class="section-title">📋 Your Appointments (<span id="appointmentCount">0</span>)</div>
+      <div id="upcomingAppointmentsList"></div>
+      <div class="section-title">Featured Doctors</div>
+      <div id="featuredDoctors"></div>
+    </div>
+
+    <!-- Admin -->
+    <div id="adminScreen" class="screen">
+      <div class="app-header"><div class="greeting" style="font-size:20px;">Admin Panel</div><button class="logout-btn" id="adminLogoutBtn">Log out</button></div>
+      <div class="card"><div class="section-title">📊 Overview</div><div class="admin-stat"><span>Total Users:</span><strong id="adminTotalUsers">0</strong></div><div class="admin-stat"><span>Total Appointments:</span><strong id="adminTotalApps">0</strong></div></div>
+      <div class="card"><div class="section-title">👥 Manage Users</div><div id="adminUserList"></div></div>
+      <div class="card"><div class="section-title">📅 All Appointments</div><div id="adminAppointmentsList"></div></div>
+    </div>
+
+    <!-- Booking -->
+    <div id="bookingScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="bookingLogoutBtn">Log out</button></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h2 style="font-size:24px;">Book Appointment</h2><span class="back-link" id="backHomeFromBooking">← Back</span></div>
+      <div class="card" style="padding:12px;"><input type="text" id="searchDoctors" placeholder="🔍 Search Doctor, Specialty or Clinic" style="width:100%; border:none; outline:none;"></div>
+      <div id="doctorsListContainer"></div>
+    </div>
+
+    <!-- Schedule -->
+    <div id="scheduleScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="scheduleLogoutBtn">Log out</button></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h2 style="font-size:22px;">Schedule</h2><span class="back-link" id="backToBooking">Cancel</span></div>
+      <div class="card"><div class="doctor-name" id="scheduleDocName"></div><div class="specialty" id="scheduleDocSpecialty"></div><div class="clinic" id="scheduleDocClinic"></div></div>
+      <div class="section-title">Select Date</div><div id="dateGrid" class="date-grid"></div>
+      <div class="section-title">Time Slots</div><div id="timeSlotsContainer"></div>
+      <button class="btn" id="confirmAppointmentBtn" style="margin-top:24px;">Confirm Appointment</button>
+    </div>
+
+    <!-- Reminders -->
+    <div id="remindersScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="remindersLogoutBtn">Log out</button></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h2 style="font-size:24px;">Reminders</h2><span class="back-link" id="backHomeFromReminders">← Home</span></div>
+      <div class="card"><div class="section-title">📆 April 2025</div><div id="calendarView" class="calendar-grid"></div></div>
+      <div class="card"><div class="section-title">🔔 Upcoming</div><div id="remindersList"></div></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settingsScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="settingsLogoutBtn">Log out</button></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:16px;"><h2 style="font-size:24px;">⚙️ Settings</h2><span class="back-link" id="backHomeFromSettings">← Home</span></div>
+      
+      <!-- Change Password -->
+      <div class="card">
+        <div class="section-title">🔐 Change Password</div>
+        <div class="input-group"><label>Current Password</label><input type="password" id="oldPassword" placeholder="Current password"></div>
+        <div class="input-group"><label>New Password</label><input type="password" id="newPassword" placeholder="New password (min 4 chars)"></div>
+        <div class="input-group"><label>Confirm New</label><input type="password" id="confirmNewPassword" placeholder="Confirm"></div>
+        <button class="btn" id="changePasswordBtn">Update Password</button>
+      </div>
+      
+      <!-- About HealthLink -->
+      <div class="card">
+        <div class="section-title">ℹ️ About HealthLink</div>
+        <div class="info-text">
+          <p><strong>HealthLink</strong> is a digital health platform aligned with <strong>SDG 3: Good Health & Well-being</strong>.</p>
+          <p style="margin-top: 8px;">✅ <strong>What we offer:</strong></p>
+          <ul style="margin-left: 20px; margin-top: 4px;">
+            <li>📅 Book & manage <strong>multiple appointments</strong> with top doctors</li>
+            <li>🔔 Smart reminders & calendar view</li>
+            <li>🎵 Customizable sound alerts</li>
+            <li>🔒 Secure local data storage</li>
+          </ul>
+          <p style="margin-top: 10px;">🌱 Our mission: reduce wait times, prevent missed visits, and make quality healthcare accessible to everyone.</p>
+          <p style="margin-top: 8px; font-size: 12px; color: #6C7A91;">Version 2.0 · Privacy-first design</p>
+        </div>
+      </div>
+      
+      <!-- Sound & Alert -->
+      <div class="card">
+        <div class="section-title">🔊 Sound & Alert</div>
+        <div class="setting-row"><span><strong>Reminder Sounds</strong></span><div id="soundToggle" class="toggle-switch"></div></div>
+        <div class="setting-row"><span>Alert Tone</span>
+          <select id="soundSelect">
+            <option value="gentle_bell">🔔 Gentle Bell</option>
+            <option value="soft_chime">✨ Soft Chime</option>
+            <option value="digital_beep">📟 Digital Beep</option>
+            <option value="custom">🎵 Custom (Upload Audio)</option>
+          </select>
+        </div>
+        <div id="customAudioUploader" style="display:none; margin-top:10px;">
+          <input type="file" id="customSoundFile" accept="audio/*">
+          <div id="customSoundStatus" style="font-size:12px; margin-top:5px; color:#6C7A91;"></div>
+        </div>
+        <button id="testSoundBtn" class="btn-outline btn" style="margin-top:12px;">🔊 Test Selected Sound</button>
+      </div>
+    </div>
+
+    <!-- Confirmation -->
+    <div id="confirmationScreen" class="screen">
+      <div class="app-header"><div></div><button class="logout-btn" id="confirmLogoutBtn">Log out</button></div>
+      <div style="text-align:center; margin:30px 0 20px;"><div style="font-size:64px;">✅</div><h2 style="color:#1E9C7A;">Appointment Confirmed!</h2></div>
+      <div class="card"><div class="doctor-name" id="confirmDocName"></div><div id="confirmDetails" style="margin:10px 0;"></div></div>
+      <button class="btn btn-outline" id="homeFromConfirm">Back to Home</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav" id="bottomNav" style="display: none;">
+    <div class="nav-item" data-nav="home"><div class="nav-icon">🏠</div><span>Home</span></div>
+    <div class="nav-item" data-nav="booking"><div class="nav-icon">📅</div><span>Book</span></div>
+    <div class="nav-item" data-nav="reminders"><div class="nav-icon">🔔</div><span>Remind</span></div>
+    <div class="nav-item" data-nav="settings"><div class="nav-icon">⚙️</div><span>Settings</span></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="customModal" class="modal-overlay">
+  <div class="modal-card">
+    <p id="modalMessage">Message</p>
+    <button class="modal-btn" id="modalConfirmBtn">OK</button>
+  </div>
+</div>
+
+<script>
+  // ---------- DATA ----------
+  const doctors = [
+    { name: "Dr. Michael Brown", specialty: "Cardiology", clinic: "Green Valley Clinic" },
+    { name: "Dr. Laura White", specialty: "Cardiologist", clinic: "City Medical Center" },
+    { name: "Dr. Alan Chen", specialty: "Cardiac Surgery", clinic: "Sunrise Hospital" },
+    { name: "Dr. Maria Santos", specialty: "Pediatrics", clinic: "Wellness Hub" },
+    { name: "Dr. James Wilson", specialty: "General Medicine", clinic: "Downtown Health" }
+  ];
+  const availableDates = ["Apr 28", "Apr 29", "Apr 30", "May 1", "May 2", "May 3", "May 5"];
+  const timeSlots = ["9:00 AM", "10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM"];
+
+  let users = JSON.parse(localStorage.getItem("healthlink_users")) || [];
+  let appointments = JSON.parse(localStorage.getItem("healthlink_appointments")) || [];
+  let currentUser = null;
+  let selectedDoctor = null;
+  let selectedDate = "Apr 29";
+  let selectedTime = "10:00 AM";
+  let soundEnabled = true;
+  let selectedSoundType = "gentle_bell";
+  let customSoundBase64 = null;
+  
+  // Audio management: track current audio source to stop it
+  let currentAudioContext = null;
+  let currentAudioElement = null;
+
+  function stopAllSounds() {
+    // Stop Web Audio
+    if (currentAudioContext) {
+      try {
+        currentAudioContext.close();
+      } catch(e) { console.warn(e); }
+      currentAudioContext = null;
+    }
+    // Stop HTMLAudioElement
+    if (currentAudioElement) {
+      currentAudioElement.pause();
+      currentAudioElement.currentTime = 0;
+      currentAudioElement = null;
+    }
+  }
+
+  if (!users.find(u => u.username === "admin")) {
+    users.push({ username: "admin", fullName: "Administrator", password: "admin123", isAdmin: true });
+    localStorage.setItem("healthlink_users", JSON.stringify(users));
+  }
+
+  // Modal
+  function showModal(message) {
+    const modal = document.getElementById("customModal");
+    document.getElementById("modalMessage").innerText = message;
+    modal.classList.add("active");
+    document.getElementById("modalConfirmBtn").onclick = () => modal.classList.remove("active");
+  }
+
+  // Sound Engine with stop-before-play
+  function playSoundByType(type, customData = null) {
+    if (!soundEnabled) return;
+    // Stop any currently playing sound
+    stopAllSounds();
+    
+    try {
+      if (type === "custom" && customData) {
+        const audio = new Audio(customData);
+        currentAudioElement = audio;
+        audio.play().catch(e => console.warn("Audio play failed", e));
+        audio.onended = () => { if (currentAudioElement === audio) currentAudioElement = null; };
+        return;
+      }
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      currentAudioContext = ctx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.value = 0.15;
+      let duration = 0.8;
+      if (type === "gentle_bell") { osc.frequency.value = 880; osc.type = "sine"; duration = 0.8; }
+      else if (type === "soft_chime") { osc.frequency.value = 523.25; osc.type = "triangle"; duration = 1.0; }
+      else if (type === "digital_beep") { osc.frequency.value = 1200; osc.type = "square"; duration = 0.3; }
+      else { osc.frequency.value = 660; osc.type = "sine"; duration = 0.5; }
+      gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
+      ctx.resume();
+      // Auto-cleanup after duration
+      setTimeout(() => {
+        if (currentAudioContext === ctx) {
+          ctx.close().catch(e=>console.warn);
+          if (currentAudioContext === ctx) currentAudioContext = null;
+        }
+      }, duration * 1000 + 100);
+    } catch(e) { console.warn("Audio error", e); }
+  }
+  
+  function playReminderSound() {
+    if (!soundEnabled) return;
+    if (selectedSoundType === "custom" && customSoundBase64) playSoundByType("custom", customSoundBase64);
+    else playSoundByType(selectedSoundType);
+  }
+
+  // Preferences (only sound now)
+  function loadUserPreferences() {
+    if (!currentUser) return;
+    const prefs = JSON.parse(localStorage.getItem(`healthlink_prefs_${currentUser.username}`)) || {};
+    soundEnabled = prefs.soundEnabled !== undefined ? prefs.soundEnabled : true;
+    selectedSoundType = prefs.soundType || "gentle_bell";
+    customSoundBase64 = prefs.customSound || null;
+    updateToggleUI();
+    updateSoundSelectUI();
+  }
+  function saveUserPreferences() {
+    if (!currentUser) return;
+    const prefs = { soundEnabled, soundType: selectedSoundType, customSound: customSoundBase64 };
+    localStorage.setItem(`healthlink_prefs_${currentUser.username}`, JSON.stringify(prefs));
+  }
+  function updateToggleUI() {
+    const toggle = document.getElementById("soundToggle");
+    if (toggle) soundEnabled ? toggle.classList.add("active") : toggle.classList.remove("active");
+  }
+  function updateSoundSelectUI() {
+    const select = document.getElementById("soundSelect");
+    if (select) select.value = selectedSoundType;
+    const uploadDiv = document.getElementById("customAudioUploader");
+    if (uploadDiv) uploadDiv.style.display = selectedSoundType === "custom" ? "block" : "none";
+  }
+
+  // Change Password
+  function changePassword() {
+    const oldPass = document.getElementById("oldPassword").value;
+    const newPass = document.getElementById("newPassword").value;
+    const confirmPass = document.getElementById("confirmNewPassword").value;
+    if (!currentUser) return;
+    if (currentUser.password !== oldPass) { showModal("Current password is incorrect."); return; }
+    if (newPass.length < 4) { showModal("New password must be at least 4 characters."); return; }
+    if (newPass !== confirmPass) { showModal("New passwords do not match."); return; }
+    currentUser.password = newPass;
+    const idx = users.findIndex(u => u.username === currentUser.username);
+    if (idx !== -1) users[idx].password = newPass;
+    saveUsers();
+    showModal("Password changed successfully!");
+    document.getElementById("oldPassword").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmNewPassword").value = "";
+  }
+
+  // Data Helpers
+  function saveUsers() { localStorage.setItem("healthlink_users", JSON.stringify(users)); }
+  function saveAppointments() { localStorage.setItem("healthlink_appointments", JSON.stringify(appointments)); }
+  function getUserAppointments(username) { return appointments.filter(a => a.username === username).sort((a,b)=>a.date.localeCompare(b.date)); }
+
+  // Render Functions (multiple appointments)
+  function renderHomeAppointments() {
+    const container = document.getElementById("upcomingAppointmentsList");
+    const countSpan = document.getElementById("appointmentCount");
+    if (!container) return;
+    const userApps = getUserAppointments(currentUser.username);
+    countSpan.innerText = userApps.length;
+    if (userApps.length === 0) { container.innerHTML = `<div class="card" style="text-align:center;">✨ No appointments yet. Book your first check-up!</div>`; return; }
+    container.innerHTML = userApps.map(app => `<div class="card appointment-card"><div class="doctor-name">${app.doctor.name}</div><div class="specialty">${app.doctor.specialty} • ${app.doctor.clinic}</div><div>📅 ${app.date} at ${app.time}</div><div style="margin-top:8px; text-align:right;"><button class="cancel-single" data-id="${app.id || app.date+app.time+app.doctor.name}" style="background:#fceaea; border:none; padding:5px 12px; border-radius:20px;">Cancel</button></div></div>`).join('');
+    document.querySelectorAll('.cancel-single').forEach(btn => btn.addEventListener('click', (e) => {
+      const id = btn.getAttribute('data-id');
+      appointments = appointments.filter(a => !(a.username === currentUser.username && (a.id == id || (a.date+a.time+a.doctor.name) === id)));
+      saveAppointments(); renderHomeAppointments(); if(document.getElementById("remindersScreen").classList.contains("active")) renderRemindersCalendar();
+      playReminderSound();
+    }));
+  }
+
+  function renderFeaturedDoctors() {
+    const container = document.getElementById("featuredDoctors");
+    if (!container) return;
+    container.innerHTML = doctors.slice(0,3).map(doc => `<div class="doctor-row" data-doctor='${JSON.stringify(doc)}'><div class="doctor-info"><div class="doctor-name">${doc.name}</div><div class="specialty">${doc.specialty} • ${doc.clinic}</div></div><div class="badge book-feature-btn" style="cursor:pointer;">Book</div></div>`).join('');
+    document.querySelectorAll('#featuredDoctors .doctor-row').forEach(row => {
+      const btn = row.querySelector('.book-feature-btn');
+      const docData = JSON.parse(row.getAttribute('data-doctor'));
+      const handler = () => { selectedDoctor = docData; showMainScreen('scheduleScreen'); renderSchedulePage(); };
+      if(btn) btn.addEventListener('click', (e) => { e.stopPropagation(); handler(); });
+      row.addEventListener('click', handler);
+    });
+  }
+
+  function renderDoctorsList(searchTerm = "") {
+    const container = document.getElementById("doctorsListContainer");
+    if (!container) return;
+    let filtered = doctors.filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || doc.specialty.toLowerCase().includes(searchTerm.toLowerCase()) || doc.clinic.toLowerCase().includes(searchTerm.toLowerCase()));
+    container.innerHTML = filtered.map(doc => `<div class="doctor-row" data-doctor='${JSON.stringify(doc)}'><div class="doctor-info"><div class="doctor-name">${doc.name}</div><div class="specialty">${doc.specialty}</div><div class="clinic" style="font-size:12px;">🏥 ${doc.clinic}</div></div><div class="badge book-doctor-btn" style="cursor:pointer;">Select</div></div>`).join('');
+    document.querySelectorAll('#doctorsListContainer .doctor-row').forEach(row => {
+      const btn = row.querySelector('.book-doctor-btn');
+      const docData = JSON.parse(row.getAttribute('data-doctor'));
+      const handler = () => { selectedDoctor = docData; showMainScreen('scheduleScreen'); renderSchedulePage(); };
+      if(btn) btn.addEventListener('click', (e) => { e.stopPropagation(); handler(); });
+      row.addEventListener('click', handler);
+    });
+  }
+
+  function renderSchedulePage() {
+    if (!selectedDoctor) selectedDoctor = doctors[0];
+    document.getElementById("scheduleDocName").innerText = selectedDoctor.name;
+    document.getElementById("scheduleDocSpecialty").innerText = selectedDoctor.specialty;
+    document.getElementById("scheduleDocClinic").innerText = selectedDoctor.clinic;
+    const dateGrid = document.getElementById("dateGrid");
+    dateGrid.innerHTML = availableDates.map(date => `<div class="date-chip ${selectedDate === date ? 'selected' : ''}" data-date="${date}">${date}</div>`).join('');
+    document.querySelectorAll('.date-chip').forEach(chip => chip.addEventListener('click', () => { selectedDate = chip.getAttribute('data-date'); renderSchedulePage(); }));
+    const timeContainer = document.getElementById("timeSlotsContainer");
+    timeContainer.innerHTML = timeSlots.map(time => `<span class="time-slot ${selectedTime === time ? 'selected' : ''}" data-time="${time}">${time}</span>`).join('');
+    document.querySelectorAll('.time-slot').forEach(slot => slot.addEventListener('click', () => { selectedTime = slot.getAttribute('data-time'); renderSchedulePage(); }));
+  }
+
+  function confirmAppointment() {
+    if (!selectedDoctor || !currentUser) return;
+    const newId = Date.now() + Math.random().toString(36);
+    appointments.push({ id: newId, username: currentUser.username, doctor: selectedDoctor, date: selectedDate, time: selectedTime, confirmedAt: new Date().toISOString() });
+    saveAppointments();
+    playReminderSound();
+    document.getElementById("confirmDocName").innerText = selectedDoctor.name;
+    document.getElementById("confirmDetails").innerHTML = `📅 ${selectedDate} at ${selectedTime}<br>📍 ${selectedDoctor.clinic}`;
+    showMainScreen('confirmationScreen');
+    renderHomeAppointments();
+    renderRemindersCalendar();
+  }
+
+  function renderRemindersCalendar() {
+    const calDiv = document.getElementById("calendarView");
+    if (!calDiv) return;
+    let html = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div style="font-size:12px; font-weight:600;">${d}</div>`).join('');
+    const userApps = getUserAppointments(currentUser.username);
+    const appDays = userApps.map(a => parseInt(a.date.split(' ')[1])).filter(d=>!isNaN(d));
+    for (let i = 1; i <= 30; i++) html += `<div class="cal-date ${appDays.includes(i) ? 'has-appointment' : ''}">${i}</div>`;
+    calDiv.innerHTML = html;
+    const remindersDiv = document.getElementById("remindersList");
+    if (userApps.length === 0) remindersDiv.innerHTML = `<div class="reminder-item">No upcoming appointments. Book a check-up today! 🌿</div>`;
+    else remindersDiv.innerHTML = userApps.map(app => `<div class="reminder-item"><div><strong>🩺 ${app.doctor.name}</strong><br>${app.doctor.specialty}<br>📅 ${app.date} at ${app.time}<br>📍 ${app.doctor.clinic}</div><button class="cancel-appt-btn" data-id="${app.id}">Cancel</button></div>`).join('');
+    document.querySelectorAll('.cancel-appt-btn').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      appointments = appointments.filter(a => !(a.username === currentUser.username && a.id == id));
+      saveAppointments(); renderRemindersCalendar(); renderHomeAppointments(); playReminderSound();
+    }));
+    if (soundEnabled && userApps.length) playReminderSound();
+  }
+
+  function renderAdminPanel() {
+    document.getElementById("adminTotalUsers").innerText = users.filter(u => !u.isAdmin).length;
+    document.getElementById("adminTotalApps").innerText = appointments.length;
+    document.getElementById("adminUserList").innerHTML = users.filter(u => !u.isAdmin).map(u => `<div class="admin-user-item"><div><strong>${u.username}</strong><br><span style="font-size:12px;">${u.fullName}</span></div><button class="delete-user-btn" data-username="${u.username}">Delete</button></div>`).join('');
+    document.querySelectorAll('.delete-user-btn').forEach(btn => btn.addEventListener('click', () => {
+      const username = btn.getAttribute('data-username');
+      users = users.filter(u => u.username !== username);
+      appointments = appointments.filter(a => a.username !== username);
+      saveUsers(); saveAppointments(); renderAdminPanel();
+    }));
+    const apptsDiv = document.getElementById("adminAppointmentsList");
+    apptsDiv.innerHTML = appointments.length === 0 ? '<div class="empty-msg">No appointments yet.</div>' : appointments.map(a => `<div class="reminder-item" style="margin-top:8px;"><strong>${a.username}</strong><br>${a.doctor.name} - ${a.doctor.specialty}<br>📅 ${a.date} at ${a.time}</div>`).join('');
+  }
+
+  function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); }
+  function showMainScreen(screenId) {
+    if (currentUser?.isAdmin) { showScreen('adminScreen'); renderAdminPanel(); return; }
+    showScreen(screenId);
+    if (screenId === 'homeScreen') { renderHomeAppointments(); renderFeaturedDoctors(); }
+    if (screenId === 'bookingScreen') renderDoctorsList("");
+    if (screenId === 'remindersScreen') renderRemindersCalendar();
+    if (screenId === 'settingsScreen') { loadUserPreferences(); updateSoundSelectUI(); }
+    const navMap = { homeScreen:'home', bookingScreen:'booking', remindersScreen:'reminders', settingsScreen:'settings' };
+    let activeNav = navMap[screenId] || 'home';
+    document.querySelectorAll('.nav-item').forEach(item => { if (item.getAttribute('data-nav') === activeNav) item.classList.add('active'); else item.classList.remove('active'); });
+  }
+
+  function logout() { 
+    stopAllSounds();
+    currentUser = null; 
+    document.getElementById("bottomNav").style.display = "none"; 
+    showScreen('loginScreen'); 
+  }
+  
+  function signUp() {
+    const username = document.getElementById("signupUsername").value.trim(), fullName = document.getElementById("signupName").value.trim(), password = document.getElementById("signupPassword").value, confirm = document.getElementById("signupConfirmPassword").value;
+    if (!username || !fullName || !password) { showModal("Please fill all fields"); return; }
+    if (password !== confirm) { showModal("Passwords do not match"); return; }
+    if (password.length < 4) { showModal("Password must be at least 4 characters"); return; }
+    if (users.find(u => u.username === username)) { showModal("Username already taken."); return; }
+    users.push({ username, fullName, password, isAdmin: false });
+    saveUsers(); showModal("Account created! Please login."); showScreen('loginScreen');
+  }
+  
+  function loginUser() {
+    const username = document.getElementById("loginUsername").value.trim(), password = document.getElementById("loginPassword").value;
+    const user = users.find(u => u.username === username && u.password === password);
+    if (user) { currentUser = user; document.getElementById("userNameDisplay").innerText = user.fullName.split(' ')[0] + "! 👋"; document.getElementById("bottomNav").style.display = "flex"; loadUserPreferences(); if (user.isAdmin) { showScreen('adminScreen'); renderAdminPanel(); } else { showMainScreen('homeScreen'); } }
+    else { showModal("Invalid username or password."); }
+  }
+
+  // Event Listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("continueToAuthBtn")?.addEventListener('click', () => showScreen('signupScreen'));
+    document.getElementById("doSignupBtn")?.addEventListener('click', signUp);
+    document.getElementById("switchToLoginFromSignup")?.addEventListener('click', () => showScreen('loginScreen'));
+    document.getElementById("doLoginBtn")?.addEventListener('click', loginUser);
+    document.getElementById("switchToSignupFromLogin")?.addEventListener('click', () => showScreen('signupScreen'));
+    document.getElementById("quickBookBtn")?.addEventListener('click', () => showMainScreen('bookingScreen'));
+    document.getElementById("quickReminderBtn")?.addEventListener('click', () => showMainScreen('remindersScreen'));
+    document.getElementById("backHomeFromBooking")?.addEventListener('click', () => showMainScreen('homeScreen'));
+    document.getElementById("backToBooking")?.addEventListener('click', () => showMainScreen('bookingScreen'));
+    document.getElementById("backHomeFromReminders")?.addEventListener('click', () => showMainScreen('homeScreen'));
+    document.getElementById("backHomeFromSettings")?.addEventListener('click', () => showMainScreen('homeScreen'));
+    document.getElementById("homeFromConfirm")?.addEventListener('click', () => showMainScreen('homeScreen'));
+    document.getElementById("confirmAppointmentBtn")?.addEventListener('click', confirmAppointment);
+    document.getElementById("searchDoctors")?.addEventListener('input', (e) => renderDoctorsList(e.target.value));
+    document.querySelectorAll('.nav-item').forEach(nav => nav.addEventListener('click', () => {
+      const to = nav.getAttribute('data-nav');
+      if (to === 'home') showMainScreen('homeScreen');
+      else if (to === 'booking') showMainScreen('bookingScreen');
+      else if (to === 'reminders') showMainScreen('remindersScreen');
+      else if (to === 'settings') showMainScreen('settingsScreen');
+    }));
+    document.querySelectorAll('.logout-btn').forEach(btn => btn.addEventListener('click', logout));
+    document.getElementById("soundToggle")?.addEventListener('click', () => { 
+      soundEnabled = !soundEnabled; 
+      updateToggleUI(); 
+      saveUserPreferences(); 
+      if(!soundEnabled) stopAllSounds();
+      else if(soundEnabled) playReminderSound(); 
+    });
+    document.getElementById("testSoundBtn")?.addEventListener('click', () => playReminderSound());
+    document.getElementById("changePasswordBtn")?.addEventListener('click', changePassword);
+    document.getElementById("soundSelect")?.addEventListener('change', (e) => {
+      // Stop any playing sound immediately when selection changes
+      stopAllSounds();
+      selectedSoundType = e.target.value;
+      if (selectedSoundType !== "custom") customSoundBase64 = null;
+      saveUserPreferences(); 
+      updateSoundSelectUI();
+    });
+    const fileInput = document.getElementById("customSoundFile");
+    if (fileInput) fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { 
+          customSoundBase64 = ev.target.result; 
+          selectedSoundType = "custom"; 
+          document.getElementById("soundSelect").value = "custom"; 
+          saveUserPreferences(); 
+          updateSoundSelectUI(); 
+          showModal("Custom sound uploaded! Use 'Test Selected Sound' to hear it.");
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    renderFeaturedDoctors();
+  });
+</script>
+</body>
+</html>
